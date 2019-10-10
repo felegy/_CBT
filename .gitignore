@@ -9,6 +9,9 @@ out/
 coverage.json
 *.cmd
 .env
+/packages/
+/paket-files/
 /.dotnet/
-/.nuget/
 /.paket/
+/.nuget/
+/.cake/

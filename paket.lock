@@ -1,1 +1,3 @@
-
+NUGET
+  remote: https://api.nuget.org/v3/index.json
+    Cake.Paket.Module (4.0)

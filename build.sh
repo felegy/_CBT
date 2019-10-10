@@ -42,20 +42,22 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1
 ###########################################################################
 
 echo "Installing Paket..."
-PAKET_VERSION=$( get_latest_release  "fsprojects/Paket" );
-PAKET_BOOTSTRAPPER_URL=https://github.com/fsprojects/Paket/releases/download/$PAKET_VERSION/paket.bootstrapper.exe
-PAKET_BOOTSTRAPPER="$SCRIPT_DIR/.paket/paket.bootstrapper.exe"
+#PAKET_VERSION=$( get_latest_release  "fsprojects/Paket" );
+#PAKET_BOOTSTRAPPER_URL=https://github.com/fsprojects/Paket/releases/download/$PAKET_VERSION/paket.bootstrapper.exe
+#PAKET_BOOTSTRAPPER="$SCRIPT_DIR/.paket/paket.bootstrapper.exe"
 
 if [ ! -d "$SCRIPT_DIR/.paket" ]; then
   mkdir "$SCRIPT_DIR/.paket"
 fi
 
-echo "Paket version: $PAKET_VERSION"
+#echo "Paket version: $PAKET_VERSION"
 
-echo "Start PaketBootstraper download from: $PAKET_BOOTSTRAPPER_URL"
-curl -Lsfo  $PAKET_BOOTSTRAPPER $PAKET_BOOTSTRAPPER_URL
+#echo "Start PaketBootstraper download from: $PAKET_BOOTSTRAPPER_URL"
+#curl -Lsfo  $PAKET_BOOTSTRAPPER $PAKET_BOOTSTRAPPER_URL
 
-mono $PAKET_BOOTSTRAPPER
+#mono $PAKET_BOOTSTRAPPER
+
+"$SCRIPT_DIR/.dotnet/dotnet" tool install Paket --tool-path $SCRIPT_DIR/.paket
 
 ###########################################################################
 # INSTALL NuGet Package manager
@@ -74,7 +76,14 @@ curl -Lsfo "$SCRIPT_DIR/.nuget/nuget.exe" https://dist.nuget.org/win-x86-command
 ###########################################################################
 
 echo "Paket Restore ..."
-mono $SCRIPT_DIR/.paket/paket.exe install
+#mono $SCRIPT_DIR/.paket/paket.exe install
+$SCRIPT_DIR/.paket/paket install
+
+echo "Installing Cake..."
+if [ ! -d "$SCRIPT_DIR/.cake" ]; then
+  mkdir "$SCRIPT_DIR/.cake"
+fi
+"$SCRIPT_DIR/.dotnet/dotnet" tool install Cake.Tool --tool-path $SCRIPT_DIR/.cake
 
 echo "BUILD Starting ..."
 
