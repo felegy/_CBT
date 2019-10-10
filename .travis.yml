@@ -1,0 +1,17 @@
+language: csharp
+os:
+  - linux
+  - osx
+
+sudo: required
+dist: trusty
+
+mono:
+  - 6.0.0
+
+script:
+  - ./build.sh
+
+notifications:
+  email:
+    - felegy@gmail.com
