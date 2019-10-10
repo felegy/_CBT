@@ -4,7 +4,7 @@ os:
   - osx
 
 sudo: required
-dist: trusty
+dist: buster
 
 mono:
   - 6.0.0
