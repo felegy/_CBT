@@ -1,0 +1,14 @@
+*.user
+*.suo
+*.apikey
+.vs/
+bin/
+obj/
+TestResults/
+out/
+coverage.json
+*.cmd
+.env
+/.dotnet/
+/.nuget/
+/.paket/
