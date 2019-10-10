@@ -36,6 +36,7 @@ export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 "$SCRIPT_DIR/.dotnet/dotnet" --info
 
+DOTNET_ROOT="$SCRIPT_DIR/.dotnet"
 
 ###########################################################################
 # INSTALL PAKET Dependecy resolver
@@ -77,7 +78,7 @@ curl -Lsfo "$SCRIPT_DIR/.nuget/nuget.exe" https://dist.nuget.org/win-x86-command
 
 echo "Paket Restore ..."
 #mono $SCRIPT_DIR/.paket/paket.exe install
-$SCRIPT_DIR/.paket/paket install
+ $SCRIPT_DIR/.paket/paket install
 
 echo "Installing Cake..."
 if [ ! -d "$SCRIPT_DIR/.cake" ]; then
