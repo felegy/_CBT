@@ -36,15 +36,12 @@ export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 "$SCRIPT_DIR/.dotnet/dotnet" --info
 
-if [ ! -d "$SCRIPT_DIR/.nuget" ]; then
-  mkdir "$SCRIPT_DIR/.nuget"
-fi
-curl -Lsfo "$SCRIPT_DIR/.nuget/nuget.exe" https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
 
 ###########################################################################
 # INSTALL PAKET Dependecy resolver
 ###########################################################################
 
+echo "Installing Paket..."
 PAKET_VERSION=$( get_latest_release  "fsprojects/Paket" );
 PAKET_BOOTSTRAPPER_URL=https://github.com/fsprojects/Paket/releases/download/$PAKET_VERSION/paket.bootstrapper.exe
 PAKET_BOOTSTRAPPER="$SCRIPT_DIR/.paket/paket.bootstrapper.exe"
@@ -57,12 +54,26 @@ curl -Lsfo  $PAKET_BOOTSTRAPPER $PAKET_BOOTSTRAPPER_URL
 
 mono $PAKET_BOOTSTRAPPER
 
+###########################################################################
+# INSTALL NuGet Package manager
+###########################################################################
+
+echo "Installing NuGet..."
+
+if [ ! -d "$SCRIPT_DIR/.nuget" ]; then
+  mkdir "$SCRIPT_DIR/.nuget"
+fi
+
+curl -Lsfo "$SCRIPT_DIR/.nuget/nuget.exe" https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
 
 ###########################################################################
 # BUILD with `msbuild` for mono or with `dotnet` for dotnet core
 ###########################################################################
 
+echo "Paket Restore ..."
 mono $SCRIPT_DIR/.paket/paket.exe install
+
+echo "BUILD Starting ..."
 
 # Nuget restor
 #mono $SCRIPT_DIR/.nuget/nuget.exe restore
