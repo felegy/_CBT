@@ -50,6 +50,9 @@ if [ ! -d "$SCRIPT_DIR/.paket" ]; then
   mkdir "$SCRIPT_DIR/.paket"
 fi
 
+echo "Paket version: $PAKET_VERSION"
+
+echo "Start PaketBootstraper download from: $PAKET_BOOTSTRAPPER_URL"
 curl -Lsfo  $PAKET_BOOTSTRAPPER $PAKET_BOOTSTRAPPER_URL
 
 mono $PAKET_BOOTSTRAPPER
