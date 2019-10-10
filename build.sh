@@ -36,7 +36,7 @@ export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 "$SCRIPT_DIR/.dotnet/dotnet" --info
 
-export DOTNET_ROOT="$(dirname $($SCRIPT_DIR/.dotnet))"
+export DOTNET_ROOT="$(dirname $($SCRIPT_DIR/.dotnet/dotnet))"
 
 ###########################################################################
 # INSTALL PAKET Dependecy resolver
