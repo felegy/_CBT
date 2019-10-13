@@ -2,24 +2,39 @@
 
 # Define directories.
 SCRIPT_DIR=$PWD
-TOOLS_DIR=$SCRIPT_DIR/tools
-CAKE_VERSION=0.24.0
-CAKE_DLL=$TOOLS_DIR/Cake.$CAKE_VERSION/Cake.exe
-DOTNET_VERSION=$(cat "$SCRIPT_DIR/global.json" | grep -o '[0-9]\.[0-9]\.[0-9][0-9][0-9]')
-DOTNET_INSTRALL_URI=https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.sh
 
-get_latest_release() {
+# Define default arguments.
+SCRIPT="build.cake"
+TARGET="Default"
+CONFIGURATION="Release"
+VERBOSITY="verbose"
+DRYRUN=
+SHOW_VERSION=false
+SCRIPT_ARGUMENTS=()
+
+# Used to convert relative paths to absolute paths.
+SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+function twoAbsolutePath {
+    cd ~ && cd $SCRIPT_DIR
+    absolutePath=$(cd $1 && pwd)
+    echo $absolutePath
+}
+
+function get_latest_release {
   curl --silent "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
     grep '"tag_name":' |                                            # Get tag line
     sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
 }
 
-echo $DOTNET_VERSION
+PAKET=".paket"
+CAKE=".cake"
+PACKAGES="packages"
+TOOLS="$PACKAGES/tools"
+ADDINS="$PACKAGES/addins"
+MODULES="$PACKAGES/modules"
 
-# Make sure the tools folder exist.
-if [ ! -d "$TOOLS_DIR" ]; then
-  mkdir "$TOOLS_DIR"
-fi
+DOTNET_VERSION=$(cat "$SCRIPT_DIR/global.json" | grep -o '[0-9]\.[0-9]\.[0-9][0-9][0-9]')
+DOTNET_INSTRALL_URI=https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.sh
 
 ###########################################################################
 # INSTALL .NET CORE CLI
@@ -36,29 +51,41 @@ export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 "$SCRIPT_DIR/.dotnet/dotnet" --info
 
+DOTNET="$SCRIPT_DIR/.dotnet/dotnet"
+
 export DOTNET_ROOT="$SCRIPT_DIR/.dotnet"
+
+###########################################################################
+
 
 ###########################################################################
 # INSTALL PAKET Dependecy resolver
 ###########################################################################
 
 echo "Installing Paket..."
-#PAKET_VERSION=$( get_latest_release  "fsprojects/Paket" );
-#PAKET_BOOTSTRAPPER_URL=https://github.com/fsprojects/Paket/releases/download/$PAKET_VERSION/paket.bootstrapper.exe
-#PAKET_BOOTSTRAPPER="$SCRIPT_DIR/.paket/paket.bootstrapper.exe"
 
-if [ ! -d "$SCRIPT_DIR/.paket" ]; then
-  mkdir "$SCRIPT_DIR/.paket"
+# Make sure the .paket directory exits.
+if [ ! -d $PAKET ]; then
+  mkdir $PAKET
 fi
 
-#echo "Paket version: $PAKET_VERSION"
+PAKET_DIR=$(twoAbsolutePath $PAKET)
 
-#echo "Start PaketBootstraper download from: $PAKET_BOOTSTRAPPER_URL"
-#curl -Lsfo  $PAKET_BOOTSTRAPPER $PAKET_BOOTSTRAPPER_URL
+# Set paket directory enviornment variable.
+export PAKET=$PAKET_DIR
+export PATH="$PAKET_DIR":$PATH
 
-#mono $PAKET_BOOTSTRAPPER
+#PAKET_EXE=$PAKET_DIR/paket.exe
+PAKET_EXE=$PAKET_DIR/paket
 
-"$SCRIPT_DIR/.dotnet/dotnet" tool install Paket --tool-path $SCRIPT_DIR/.paket
+if [ ! -f "$PAKET_EXE" ]; then
+  $DOTNET tool install Paket --tool-path $PAKET
+fi
+
+if [ ! -f "$PAKET_EXE" ]; then
+  echo "Could not find paket tool at '$PAKET_EXE'."
+  exit 1
+fi
 
 ###########################################################################
 # INSTALL NuGet Package manager
@@ -73,27 +100,74 @@ fi
 curl -Lsfo "$SCRIPT_DIR/.nuget/nuget.exe" https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
 
 ###########################################################################
-# BUILD with `msbuild` for mono or with `dotnet` for dotnet core
+# INSTALL Cake // C# make
 ###########################################################################
 
-echo "Paket Restore ..."
-#mono $SCRIPT_DIR/.paket/paket.exe install
- $SCRIPT_DIR/.paket/paket install
-
 echo "Installing Cake..."
-if [ ! -d "$SCRIPT_DIR/.cake" ]; then
-  mkdir "$SCRIPT_DIR/.cake"
+
+#export CAKE_SETTINGS_SKIPPACKAGEVERSIONCHECK=true
+
+# Make sure the .cake directory exits.
+if [ ! -d $CAKE ]; then
+  mkdir $CAKE
 fi
-"$SCRIPT_DIR/.dotnet/dotnet" tool install Cake.Tool --tool-path $SCRIPT_DIR/.cake
 
-echo "BUILD Starting ..."
+CAKE_DIR=$(twoAbsolutePath $CAKE)
 
-# Nuget restor
-#mono $SCRIPT_DIR/.nuget/nuget.exe restore
+# Set cake directory enviornment variable.
+export CAKE=$CAKE_DIR
+export PATH="$CAKE_DIR":$PATH
 
-# .Net build restor with `msbuild`
-msbuild . -t:restore
-#"$SCRIPT_DIR/.dotnet/dotnet" msbuild . -t:restore
+#CAKE_EXE=$CAKE_DIR/cake.exe
+CAKE_EXE=$CAKE_DIR/dotnet-cake
 
-msbuild . -p:Configuration=Release
-#"$SCRIPT_DIR/.dotnet/dotnet" build --config Release
+if [ ! -f "$CAKE_EXE" ]; then
+  $DOTNET tool install Cake.Tool --tool-path $CAKE_DIR
+fi
+
+if [ ! -f "$CAKE_EXE" ]; then
+  echo "Could not find cake tool at '$CAKE_EXE'."
+  exit 1
+fi
+
+echo "Paket Restore ..."
+#mono $PAKET_EXE" restore
+$PAKET_EXE restore
+
+# tools
+if [ -d "$TOOLS" ]; then
+    TOOLS_DIR=$(twoAbsolutePath $TOOLS)
+    export CAKE_PATHS_TOOLS=$TOOLS_DIR
+else
+    echo "Could not find tools directory at '$TOOLS'."
+fi
+
+# addins
+if [ -d "$ADDINS" ]; then
+    ADDINS_DIR=$(twoAbsolutePath $ADDINS)
+    export CAKE_PATHS_ADDINS=$ADDINS_DIR
+else
+    echo "Could not find addins directory at '$ADDINS'."
+fi
+
+# modules
+if [ -d "$MODULES" ]; then
+    MODULES_DIR=$(twoAbsolutePath $MODULES)
+    export CAKE_PATHS_MODULES=$MODULES_DIR
+else
+    echo "Could not find modules directory at '$MODULES'."
+fi
+
+###########################################################################
+# Cake BUILD start
+###########################################################################
+
+# Start Cake.
+if $SHOW_VERSION; then
+    #exec mono "$CAKE_EXE" -version
+    exec "$CAKE_EXE" -version
+else
+    echo "Cake BUILD Starting ..."
+    #exec mono "$CAKE_EXE" $SCRIPT "$@"
+    exec "$CAKE_EXE" $SCRIPT "$@"
+fi

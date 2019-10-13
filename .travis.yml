@@ -7,10 +7,10 @@ sudo: required
 dist: buster
 
 mono:
-  - 6.0.0
+  - latest
 
 script:
-  - ./build.sh
+  - ./build.sh --verbosity=normal
 
 notifications:
   email:
